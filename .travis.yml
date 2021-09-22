@@ -1,0 +1,19 @@
+sudo: required
+services:
+  - docker
+before_install:
+  - docker build -t paurau/react-test -f ./client/Dockerfile.dev ./client
+script:
+  - docker run -e CI=true paurau/react-test npm test -- --coverage
+after_success:
+  - docker build -t paurau/multi-client ./client
+  - docker build -t paurau/multi-nginx ./nginx
+  - docker build -t paurau/multi-server ./server
+  - docker build -t paurau/multi-worker ./worker
+  # login to Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take images and push them to Docker hub
+  - docker push paurau/multi-client
+  - docker push paurau/multi-nginx
+  - docker push paurau/multi-server
+  - docker push paurau/multi-worker
